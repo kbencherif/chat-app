@@ -83,6 +83,9 @@ class ChatServer {
         });
     }
 
+    /**
+     * Handle a new user connection and its errors.
+     */
     private newUser(username: string): void {
         if (username === '') {
             throw new Error("Give a username to use the application (ws://{url}?username={your username}).")

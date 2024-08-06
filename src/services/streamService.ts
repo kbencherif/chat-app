@@ -10,6 +10,12 @@ class StreamService {
         this.writeStream = writeStream
     }
 
+    /**
+     * Get the fifty last lines from a stream. It take a callback as input
+     * It is safe if the stream doesnt have 50 lines.
+     * eg: getData(lines => {console.log(lines)})
+     */
+
     public getData(callback: (lines: string[]) => void): void {
         let lines: string[] = []
         const rl = readline.createInterface({
@@ -25,6 +31,10 @@ class StreamService {
             callback(lines.splice(-50))
         })
     }
+
+    /**
+    * Write data to a stream
+    */
 
     public writeData(data: string): void {
         this.writeStream.on('error', (e) => {
