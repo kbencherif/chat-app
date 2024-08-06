@@ -4,12 +4,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { events, chatEventEmitter } from './events';
 import { URL } from 'url';
-
+import { nameCorrection } from './utils/nameCorrection';
 
 class ChatServer {
     private server: http.Server;
     private wss: WebSocket.Server;
     private logFilePath: string;
+    private users: string[];
 
     constructor() {
         this.server = http.createServer();
@@ -17,13 +18,19 @@ class ChatServer {
         this.logFilePath = path.join(__dirname, '../logs/chat.log');
         this.setupWebSocket();
         this.setupEventHandlers();
+        this.users = []
     }
 
     private setupWebSocket(): void {
         this.wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
-            const username = new URL(`http://${req.headers.host}${req.url}`).searchParams.get('username')
-            if (username === null) {
+            const url = new URL(`http://${req.headers.host}${req.url}`)
+            const username: string = nameCorrection(url.searchParams.get('username') ?? '')
+
+            if (username === '') {
                 ws.send("Give a username to use the application (ws://{url}?username={your username}).")
+                ws.terminate()
+            } else if (this.users.includes(username)) {
+                ws.send("User with this name already exists")
                 ws.terminate()
             } else {
                 chatEventEmitter.emit(events.USER_JOIN, username);
@@ -42,7 +49,7 @@ class ChatServer {
 
 
             ws.on('close', () => {
-                chatEventEmitter.emit(events.USER_JOIN, username);
+                chatEventEmitter.emit(events.USER_LEAVE, username);
             })
         });
 
@@ -54,11 +61,15 @@ class ChatServer {
         });
 
         chatEventEmitter.on(events.USER_JOIN, (username: string) => {
-            console.log(username)
+            this.users.push(username)
         })
 
         chatEventEmitter.on(events.USER_LEAVE, (username: string) => {
-            console.log(username)
+            const i = this.users.indexOf(username)
+            if (i > -1) {
+                this.users.splice(i, 1)
+            }
+
         })
     }
 
