@@ -37,10 +37,14 @@ class ChatServer {
             try {
                 this.newUser(username)
                 ws.send(`Welcome to the chat ${username}!`);
+                this.streamService.getData((history) => {
+                    history.forEach(e => ws.send(e))
+                })
             } catch (e: any) {
                 ws.send(e.toString())
                 ws.terminate()
             }
+
 
             ws.on('message', (data: string) => {
                 const message = this.messageService.newMessage(data, username)
@@ -91,8 +95,9 @@ class ChatServer {
 
     private setUpStreamService(path: string): StreamService {
         return new StreamService(
-            fs.createReadStream(path, 'utf-8'),
-            fs.createWriteStream(path, 'utf-8'))
+            fs.createReadStream(path, { encoding: 'utf-8' }),
+            fs.createWriteStream(path, { flags: 'a', encoding: 'utf-8' })
+        )
     }
 
     public start(port: number): void {
