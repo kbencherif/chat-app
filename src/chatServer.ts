@@ -3,6 +3,7 @@ import * as WebSocket from 'ws';
 import * as fs from 'fs';
 import * as path from 'path';
 import { events, chatEventEmitter } from './events';
+import { URL } from 'url';
 
 
 class ChatServer {
@@ -19,7 +20,16 @@ class ChatServer {
     }
 
     private setupWebSocket(): void {
-        this.wss.on('connection', (ws: WebSocket) => {
+        this.wss.on('connection', (ws: WebSocket, req: http.IncomingMessage) => {
+            const username = new URL(`http://${req.headers.host}${req.url}`).searchParams.get('username')
+            if (username === null) {
+                ws.send("Give a username to use the application (ws://{url}?username={your username}).")
+                ws.terminate()
+            } else {
+                chatEventEmitter.emit(events.USER_JOIN, username);
+                ws.send(`Welcome to the chat ${username}!`);
+            }
+
             ws.on('message', (message: string) => {
                 const logMessage = `[${new Date().toISOString()}] ${message}\n`;
                 fs.appendFile(this.logFilePath, logMessage, err => {
@@ -30,14 +40,26 @@ class ChatServer {
                 chatEventEmitter.emit(events.MESSAGE_RECEIVED, message);
             });
 
-            ws.send('Welcome to the chat!');
+
+            ws.on('close', () => {
+                chatEventEmitter.emit(events.USER_JOIN, username);
+            })
         });
+
     }
 
     private setupEventHandlers(): void {
         chatEventEmitter.on(events.MESSAGE_RECEIVED, (message: string) => {
             this.broadcast(message);
         });
+
+        chatEventEmitter.on(events.USER_JOIN, (username: string) => {
+            console.log(username)
+        })
+
+        chatEventEmitter.on(events.USER_LEAVE, (username: string) => {
+            console.log(username)
+        })
     }
 
     private broadcast(message: string): void {
