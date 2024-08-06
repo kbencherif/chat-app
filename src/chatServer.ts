@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { events, chatEventEmitter } from './events';
 
+
 class ChatServer {
     private server: http.Server;
     private wss: WebSocket.Server;
