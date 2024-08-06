@@ -7,7 +7,6 @@ COPY package.json .
 RUN npm i
 
 COPY tsconfig.json .
-COPY ./logs/ ./logs/
 
 EXPOSE 3000
 

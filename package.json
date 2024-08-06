@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "start:watch": "nodemon src/index.ts",
-    "start:dev": "ts-node -r src/index.ts"
+    "start:dev": "ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",

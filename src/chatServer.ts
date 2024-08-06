@@ -6,12 +6,17 @@ import { events, chatEventEmitter } from './events';
 import { URL } from 'url';
 import { nameCorrection } from './utils/nameCorrection';
 import { UsersManager } from './utils/usersManager';
+import { StreamService } from './services/streamService';
+import { MessageService } from './services/messageService';
+import { Message } from './types/message';
 
 class ChatServer {
     private server: http.Server;
     private wss: WebSocket.Server;
     private logFilePath: string;
     private usersManager: UsersManager;
+    private streamService: StreamService
+    private messageService: MessageService
 
     constructor() {
         this.server = http.createServer();
@@ -20,6 +25,8 @@ class ChatServer {
         this.setupWebSocket();
         this.setupEventHandlers();
         this.usersManager = new UsersManager()
+        this.streamService = this.setUpStreamService(this.logFilePath)
+        this.messageService = new MessageService()
     }
 
     private setupWebSocket(): void {
@@ -30,18 +37,17 @@ class ChatServer {
             try {
                 this.newUser(username)
                 ws.send(`Welcome to the chat ${username}!`);
+                this.streamService.getData((history) => {
+                    history.forEach(e => ws.send(e))
+                })
             } catch (e: any) {
                 ws.send(e.toString())
                 ws.terminate()
             }
 
-            ws.on('message', (message: string) => {
-                const logMessage = `[${new Date().toISOString()}] ${message}\n`;
-                fs.appendFile(this.logFilePath, logMessage, err => {
-                    if (err) {
-                        console.error('Failed to write to log file', err);
-                    }
-                });
+
+            ws.on('message', (data: string) => {
+                const message = this.messageService.newMessage(data, username)
                 chatEventEmitter.emit(events.MESSAGE_RECEIVED, message);
             });
 
@@ -54,8 +60,10 @@ class ChatServer {
     }
 
     private setupEventHandlers(): void {
-        chatEventEmitter.on(events.MESSAGE_RECEIVED, (message: string) => {
-            this.broadcast(message);
+        chatEventEmitter.on(events.MESSAGE_RECEIVED, (message: Message) => {
+            const stringMessage = this.messageService.format(message)
+            this.streamService.writeData(stringMessage)
+            this.broadcast(stringMessage);
         });
 
         chatEventEmitter.on(events.USER_JOIN, (username: string) => {
@@ -83,6 +91,13 @@ class ChatServer {
         } else {
             chatEventEmitter.emit(events.USER_JOIN, username);
         }
+    }
+
+    private setUpStreamService(path: string): StreamService {
+        return new StreamService(
+            fs.createReadStream(path, { encoding: 'utf-8' }),
+            fs.createWriteStream(path, { flags: 'a', encoding: 'utf-8' })
+        )
     }
 
     public start(port: number): void {
