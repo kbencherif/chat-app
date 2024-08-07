@@ -64,7 +64,7 @@ This project is a real-time chat application built using Node.js and TypeScript.
 - `src/`: Contains the source code.
 - `logs/`: Contains the chat log file.
 - `tests/`: Contains the tests files.
-- 
+
 ### How to contribute?
 
 1. Create a branch
@@ -82,11 +82,13 @@ This project is a real-time chat application built using Node.js and TypeScript.
 2. Follow the same commit standar
 
     Use emoji as prefix for your commit message. Don't use any random emoji, use gitmoji guide -> https://gitmoji.dev/.
+
     A commit message should start by a capital letter, the first word should be a verb and it should end by a dot.
 
 3. Write your tests
 
-    You should implements tests to make sur your code works the way you want. We use the testing framework jest https://jestjs.io/
+    You should implements tests to make sur your code works the way you want. We use the testing framework jest https://jestjs.io/.
+
     Before a merge to develop all your tests should pass.
     You can write your test before or after development, there is no strict rule for that.
     
