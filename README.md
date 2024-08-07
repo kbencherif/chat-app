@@ -83,6 +83,8 @@ This project is a real-time chat application built using Node.js and TypeScript.
 
     Use emoji as prefix for your commit message. Don't use any random emoji, use gitmoji guide -> https://gitmoji.dev/.
 
+    More informations about gitmoji: https://gitmoji.dev/about.
+
     A commit message should start by a capital letter, the first word should be a verb and it should end by a dot.
 
 3. Write your tests
